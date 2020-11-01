@@ -2,6 +2,7 @@ package fiuba.fp
 
 import java.nio.file.Paths
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 
 import cats.effect.{Blocker, ExitCode, IO, IOApp}
 import fiuba.fp.models.DataSetRow
@@ -31,6 +32,7 @@ object Run extends IOApp {
     for {
       fields <- mapLineToFields(line)
       id <- fields(0).toIntOption
+      date <- toLocalDateTimeOption(fields(1))
       last <- fields(5).toDoubleOption
       close <- fields(6).toDoubleOption
       diff <- fields(7).toDoubleOption
@@ -40,22 +42,28 @@ object Run extends IOApp {
     } yield
       DataSetRow(
         id,
-        LocalDateTime.MIN,
-        None,
-        None,
-        None,
+        date,
+        fields(2).toDoubleOption,
+        fields(3).toDoubleOption,
+        fields(4).toDoubleOption,
         last,
         close,
         diff,
         fields(8),
-        None,
-        None,
-        None,
+        fields(9).toIntOption,
+        fields(10).toIntOption,
+        fields(11).toIntOption,
         fields(12),
         dollarBN,
         dollarItau,
         wDiff
       )
+  }
+
+  private def toLocalDateTimeOption(field: String): Option[LocalDateTime] = {
+    val field2 = field.replace("a.m.", "AM")
+      .replace("p.m.", "PM")
+    Some(LocalDateTime.parse(field2, DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm:ss a")))
   }
 
   def mapLineToFields(line: String): Option[List[String]] = {
