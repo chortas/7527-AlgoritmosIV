@@ -1,11 +1,11 @@
 package fiuba.fp
 
-import cats.effect.{Blocker, ExitCode, IO, IOApp}
-import fs2.{Stream, io, text}
 import java.nio.file.Paths
 import java.time.LocalDateTime
 
+import cats.effect.{Blocker, ExitCode, IO, IOApp}
 import fiuba.fp.models.DataSetRow
+import fs2.{Stream, io, text}
 
 object Run extends IOApp {
 
@@ -31,6 +31,12 @@ object Run extends IOApp {
     for {
       fields <- mapLineToFields(line)
       id <- fields(0).toIntOption
+      last <- fields(5).toDoubleOption
+      close <- fields(6).toDoubleOption
+      diff <- fields(7).toDoubleOption
+      dollarBN <- fields(13).toDoubleOption
+      dollarItau <- fields(14).toDoubleOption
+      wDiff <- fields(15).toDoubleOption
     } yield
       DataSetRow(
         id,
@@ -38,17 +44,17 @@ object Run extends IOApp {
         None,
         None,
         None,
-        0,
-        0,
-        0,
-        "",
+        last,
+        close,
+        diff,
+        fields(8),
         None,
         None,
         None,
-        "",
-        0,
-        0,
-        0
+        fields(12),
+        dollarBN,
+        dollarItau,
+        wDiff
       )
   }
 
