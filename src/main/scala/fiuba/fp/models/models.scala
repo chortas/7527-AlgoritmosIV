@@ -20,3 +20,7 @@ case class DataSetRow(
                      dollarItau: Double,
                      wDiff: Double
                      )
+
+object DataSetRow {
+  val NUMBER_OF_FIELDS: Int = 16
+}

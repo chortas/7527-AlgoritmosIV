@@ -14,6 +14,7 @@ object Run extends IOApp {
           .through(text.utf8Decode)
           .through(text.lines)
           .drop(1) // remove header
+          .dropLastIf(_.isEmpty)
           .map(mapLineToRow)
           .map(_.toString)
           .intersperse("\n")
@@ -24,6 +25,14 @@ object Run extends IOApp {
     def run(args: List[String]): IO[ExitCode] =
         converter.compile.drain.map(_ => ExitCode.Success)
 
-    def mapLineToRow(line: String): Option[DataSetRow] = Some(DataSetRow(
-        1, LocalDateTime.MIN, None, None, None, 0, 0, 0, "", None, None, None, "", 0, 0, 0))
+    def mapLineToRow(line: String): Option[DataSetRow] = mapLineToFields(line).map(_ =>
+        DataSetRow(1, LocalDateTime.MIN, None, None, None, 0, 0, 0, "", None, None, None, "", 0, 0, 0))
+
+    def mapLineToFields(line: String): Option[List[String]] = {
+        val split = line.split(',')
+        split.length match {
+            case DataSetRow.NUMBER_OF_FIELDS => Some(split.toList)
+            case _ => None
+        }
+    }
 }
