@@ -5,6 +5,7 @@ import java.nio.file.Paths
 import cats.effect.{Blocker, ExitCode, IO, IOApp}
 import doobie._
 import doobie.implicits._
+import fiuba.fp.database.QueryConstructor
 import fiuba.fp.models.DataSetRow
 import fs2.{Stream, io, text}
 
@@ -20,21 +21,27 @@ object Run extends IOApp {
         .through(text.lines)
         .drop(1) // remove header
         .dropLastIf(_.isEmpty)
+        .take(5)
         .map(DataSetRow.toDataSetRowOption)
-        .flatMap(_ => q.transact(transactor))
-        .intersperse("\n")
-        .through(text.utf8Encode)
-        .through(io.file.writeAll(Paths.get("celsius.txt"), blocker))
+        .map {
+          case None => IO.unit
+          case Some(r) =>
+            QueryConstructor
+              .construct(r)
+              .run
+              .transact(transactor)
+              .unsafeRunSync()
+        }
   }
 
   implicit val cs = IO.contextShift(ExecutionContext.global)
 
   val transactor = Transactor.fromDriverManager[IO](
     "org.postgresql.Driver",
-    "jdbc:postgresql://localhost:5433/fpalgo",
-    "fiuba","password")
-
-  val q = sql"select '42'".query[String].stream
+    "jdbc:postgresql://localhost:5434/fpalgo",
+    "fiuba",
+    "password"
+  )
 
   def run(args: List[String]): IO[ExitCode] =
     converter.compile.drain.map(_ => ExitCode.Success)
