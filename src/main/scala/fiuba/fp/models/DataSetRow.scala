@@ -34,6 +34,8 @@ object DataSetRow {
       last <- fields(5).toDoubleOption.toRight(new Throwable())
       close <- fields(6).toDoubleOption.toRight(new Throwable())
       diff <- fields(7).toDoubleOption.toRight(new Throwable())
+      curr <- toVaryingNotNullEither(1, fields(8))
+      unit <- toVaryingNotNullEither(4, fields(12))
       dollarBN <- fields(13).toDoubleOption.toRight(new Throwable())
       dollarItau <- fields(14).toDoubleOption.toRight(new Throwable())
       wDiff <- fields(15).toDoubleOption.toRight(new Throwable())
@@ -47,16 +49,30 @@ object DataSetRow {
         last,
         close,
         diff,
-        fields(8),
+        curr,
         fields(9).toIntOption,
         fields(10).toIntOption,
         fields(11).toIntOption,
-        fields(12),
+        unit,
         dollarBN,
         dollarItau,
         wDiff
       )
   }
+
+  private def toVaryingNotNullEither(length: Int,
+                                     field: String): Either[Throwable, String] =
+    if (field.length == 0) {
+      Left(new Throwable(s"Field should not be null"))
+    } else if (length < field.length) {
+      Left(
+        new Throwable(
+          s"Value '${field}' should be at most ${length} characters long"
+        )
+      )
+    } else {
+      Right(field)
+    }
 
   private def toLocalDateTimeOption(field: String): Option[LocalDateTime] = {
     val field2 = field
