@@ -1,3 +1,10 @@
+# Integrantes
+
+Padrón | Nombre               | E-mail
+-------|----------------------|------------------------
+94322  | Martín González Coll | mgonzalezcoll@fi.uba.ar
+100687 | Cecilia Hortas       | chortas@fi.uba.ar
+
 # Primera Parte
 
 La primera instancia consta de un desarrollo en el lenguaje de programación Scala haciendo uso exclusivamente de herramientas del paradigma funcional y comentando el mismo utilizando el estilo Scaladoc.
