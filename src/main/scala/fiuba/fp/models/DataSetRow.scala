@@ -3,6 +3,8 @@ package fiuba.fp.models
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 
+import scala.util.Try
+
 case class DataSetRow(id: Int,
                       date: LocalDateTime,
                       open: Option[Double],
@@ -30,7 +32,7 @@ object DataSetRow {
     for {
       fields <- toFieldsEither(line)
       id <- fields(0).toIntOption.toRight(new Throwable())
-      date <- toLocalDateTimeOption(fields(1)).toRight(new Throwable())
+      date <- toLocalDateTimeEither(fields(1))
       last <- fields(5).toDoubleOption.toRight(new Throwable())
       close <- fields(6).toDoubleOption.toRight(new Throwable())
       diff <- fields(7).toDoubleOption.toRight(new Throwable())
@@ -74,14 +76,16 @@ object DataSetRow {
       Right(field)
     }
 
-  private def toLocalDateTimeOption(field: String): Option[LocalDateTime] = {
+  private def toLocalDateTimeEither(
+    field: String
+  ): Either[Throwable, LocalDateTime] = {
     val field2 = field
       .replace("a.m.", "AM")
       .replace("p.m.", "PM")
-    Some(
+    Try(
       LocalDateTime
         .parse(field2, DateTimeFormatter.ofPattern("dd/MM/yyyy hh:mm:ss a"))
-    )
+    ).toEither
   }
 
   def toFieldsEither(line: String): Either[Throwable, List[String]] = {
