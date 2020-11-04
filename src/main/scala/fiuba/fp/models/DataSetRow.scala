@@ -31,16 +31,16 @@ object DataSetRow {
   def toDataSetRowEither(line: String): Either[Throwable, DataSetRow] = {
     for {
       fields <- toFieldsEither(line)
-      id <- fields(0).toIntOption.toRight(new Throwable())
+      id <- toIntNotNullEither(fields(0))
       date <- toLocalDateTimeEither(fields(1))
-      last <- fields(5).toDoubleOption.toRight(new Throwable())
-      close <- fields(6).toDoubleOption.toRight(new Throwable())
-      diff <- fields(7).toDoubleOption.toRight(new Throwable())
+      last <- toDoubleNotNullEither(fields(5))
+      close <- toDoubleNotNullEither(fields(6))
+      diff <- toDoubleNotNullEither(fields(7))
       curr <- toVaryingNotNullEither(1, fields(8))
       unit <- toVaryingNotNullEither(4, fields(12))
-      dollarBN <- fields(13).toDoubleOption.toRight(new Throwable())
-      dollarItau <- fields(14).toDoubleOption.toRight(new Throwable())
-      wDiff <- fields(15).toDoubleOption.toRight(new Throwable())
+      dollarBN <- toDoubleNotNullEither(fields(13))
+      dollarItau <- toDoubleNotNullEither(fields(14))
+      wDiff <- toDoubleNotNullEither(fields(15))
     } yield
       DataSetRow(
         id,
@@ -62,19 +62,27 @@ object DataSetRow {
       )
   }
 
+  def toNotNullEither(field: String): Either[Throwable, String] = field match {
+    case "" => Left(new Throwable("Field should not be null"))
+    case f  => Right(f)
+  }
+
+  def toIntNotNullEither(field: String): Either[Throwable, Int] =
+    toNotNullEither(field).flatMap(
+      _.toIntOption.toRight(new Throwable("Field should be an int"))
+    )
+
+  def toDoubleNotNullEither(field: String): Either[Throwable, Double] =
+    toNotNullEither(field).flatMap(
+      _.toDoubleOption.toRight(new Throwable("Field should be a double"))
+    )
+
   private def toVaryingNotNullEither(length: Int,
                                      field: String): Either[Throwable, String] =
-    if (field.length == 0) {
-      Left(new Throwable(s"Field should not be null"))
-    } else if (length < field.length) {
-      Left(
-        new Throwable(
-          s"Value '${field}' should be at most ${length} characters long"
-        )
-      )
-    } else {
-      Right(field)
-    }
+    toNotNullEither(field).filterOrElse(
+      _.length <= length,
+      new Throwable(s"Value '$field' should be at most $length characters long")
+    )
 
   private def toLocalDateTimeEither(
     field: String
@@ -95,7 +103,7 @@ object DataSetRow {
       case n =>
         Left(
           new Throwable(
-            s"Expected ${DataSetRow.NUMBER_OF_FIELDS} but got ${n} fields"
+            s"Expected ${DataSetRow.NUMBER_OF_FIELDS} but got $n fields"
           )
         )
     }
