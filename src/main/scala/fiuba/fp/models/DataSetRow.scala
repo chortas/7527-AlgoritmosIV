@@ -28,15 +28,15 @@ object DataSetRow {
 
   def toDataSetRowEither(line: String): Either[Throwable, DataSetRow] = {
     for {
-      fields <- mapLineToFields(line)
-      id <- fields(0).toIntOption
-      date <- toLocalDateTimeOption(fields(1))
-      last <- fields(5).toDoubleOption
-      close <- fields(6).toDoubleOption
-      diff <- fields(7).toDoubleOption
-      dollarBN <- fields(13).toDoubleOption
-      dollarItau <- fields(14).toDoubleOption
-      wDiff <- fields(15).toDoubleOption
+      fields <- toFieldsEither(line)
+      id <- fields(0).toIntOption.toRight(new Throwable())
+      date <- toLocalDateTimeOption(fields(1)).toRight(new Throwable())
+      last <- fields(5).toDoubleOption.toRight(new Throwable())
+      close <- fields(6).toDoubleOption.toRight(new Throwable())
+      diff <- fields(7).toDoubleOption.toRight(new Throwable())
+      dollarBN <- fields(13).toDoubleOption.toRight(new Throwable())
+      dollarItau <- fields(14).toDoubleOption.toRight(new Throwable())
+      wDiff <- fields(15).toDoubleOption.toRight(new Throwable())
     } yield
       DataSetRow(
         id,
@@ -56,7 +56,7 @@ object DataSetRow {
         dollarItau,
         wDiff
       )
-  }.toRight(new Throwable())
+  }
 
   private def toLocalDateTimeOption(field: String): Option[LocalDateTime] = {
     val field2 = field
@@ -68,11 +68,16 @@ object DataSetRow {
     )
   }
 
-  def mapLineToFields(line: String): Option[List[String]] = {
+  def toFieldsEither(line: String): Either[Throwable, List[String]] = {
     val split = line.split(',')
     split.length match {
-      case DataSetRow.NUMBER_OF_FIELDS => Some(split.toList)
-      case _                           => None
+      case DataSetRow.NUMBER_OF_FIELDS => Right(split.toList)
+      case n =>
+        Left(
+          new Throwable(
+            s"Expected ${DataSetRow.NUMBER_OF_FIELDS} but got ${n} fields"
+          )
+        )
     }
   }
 }

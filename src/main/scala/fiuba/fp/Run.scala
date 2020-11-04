@@ -29,7 +29,7 @@ object Run extends IOApp {
               .run
               .transact(transactor)
               .attempt
-          case _ => IO.pure(Left(new Throwable()))
+          case l => IO.pure(l)
         }
         .evalMap {
           case Left(ex) => IO(println(ex))
