@@ -13,7 +13,7 @@ import scala.concurrent.ExecutionContext
 
 object Run extends IOApp {
 
-  val converter: Stream[IO, Unit] = Stream.resource(Blocker[IO]).flatMap {
+  val converter: Stream[IO, Int] = Stream.resource(Blocker[IO]).flatMap {
     blocker =>
       io.file
         .readAll[IO](Paths.get("train.csv"), blocker, 4096)
@@ -23,14 +23,13 @@ object Run extends IOApp {
         .dropLastIf(_.isEmpty)
         .take(5)
         .map(DataSetRow.toDataSetRowOption)
-        .map {
-          case None => IO.unit
+        .evalMap {
+          case None => IO.pure(0)
           case Some(r) =>
             QueryConstructor
               .construct(r)
               .run
               .transact(transactor)
-              .unsafeRunSync()
         }
   }
 

@@ -30,3 +30,9 @@ CREATE TABLE fptp.dataset
 ```
 
 Si un campo nulleable tiene error se guarda como null, sino se descarta la linea.
+
+# DB
+
+```sh
+docker run --rm -ti -p 5434:5432 fpfiuba/tpdb:1
+```
