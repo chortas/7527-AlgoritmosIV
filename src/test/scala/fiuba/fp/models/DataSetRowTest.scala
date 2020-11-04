@@ -3,8 +3,50 @@ package fiuba.fp.models
 import java.time.LocalDateTime
 
 import fiuba.fp.FpTpSpec
+import fiuba.fp.models.DataSetRow._
 
 class DataSetRowTest extends FpTpSpec {
+
+  "An empty field" should "return exception" in {
+    toNotNullEither("").isLeft shouldBe true
+  }
+
+  "Invalid double fields" should "return exception" in {
+    toDoubleNotNullEither("").isLeft shouldBe true
+    toDoubleNotNullEither("fasads").isLeft shouldBe true
+  }
+
+  "Invalid int fields" should "return exception" in {
+    toIntNotNullEither("").isLeft shouldBe true
+    toIntNotNullEither("fasads").isLeft shouldBe true
+    toIntNotNullEither("34.5").isLeft shouldBe true
+    toIntNotNullEither("2147483648").isLeft shouldBe true
+  }
+
+  "Invalid varying fields" should "return exception" in {
+    toVaryingNotNullEither(1, "").isLeft shouldBe true
+    toVaryingNotNullEither(1, "ss").isLeft shouldBe true
+  }
+
+  "Invalid local date times" should "return exception" in {
+    toLocalDateTimeEither("").isLeft shouldBe true
+    toLocalDateTimeEither("05/01/2004").isLeft shouldBe true
+    toLocalDateTimeEither("12:00:00 a.m.").isLeft shouldBe true
+    toLocalDateTimeEither("05/01/200 12:00:00 a.m.").isLeft shouldBe true
+    toLocalDateTimeEither("05/01/2004  12:00:00 a.m.").isLeft shouldBe true
+    toLocalDateTimeEither("05/01/2004 12:00:00 a.m").isLeft shouldBe true
+    toLocalDateTimeEither("05/01/2004 12:00:00 am").isLeft shouldBe true
+    toLocalDateTimeEither("32/01/2004 12:00:00 a.m.").isLeft shouldBe true
+    toLocalDateTimeEither("05/13/2004 12:00:00 a.m.").isLeft shouldBe true
+    toLocalDateTimeEither("05/01/2004 26:00:00 a.m.").isLeft shouldBe true
+    toLocalDateTimeEither("05/01/2004 12:00:90 a.m.").isLeft shouldBe true
+  }
+
+  "Invalid lines" should "return exception" in {
+    toFieldsEither("").isLeft shouldBe true
+    toFieldsEither("a,b,c,d,e,f,g,h,i,j,k,l,m,n,o").isLeft shouldBe true
+    toFieldsEither("a,b,c,d,e,f,g,h,i,j,k,l,m,n,o,p,q").isLeft shouldBe true
+  }
 
   "A DataSetRow" should "represent a row" in {
 
@@ -54,7 +96,7 @@ class DataSetRowTest extends FpTpSpec {
     val line =
       "2923,05/11/2015 12:00:00 a.m.,0,0,0,0,241.8,-2.2,D,200300,6400,0,TONS,9.58,9.562,-241.8"
 
-    DataSetRow.toDataSetRowOption(line).get shouldBe row
+    DataSetRow.toDataSetRowEither(line) shouldBe Right(row)
   }
 
   "Bad formatted lines" should "be None" in {
@@ -72,6 +114,8 @@ class DataSetRowTest extends FpTpSpec {
       "2924,06/11/2015 12:00:00 a.m.,0,0,0,0,241.8,0,D,194900,-5400,0,TONS,9.58,NA,-241.8"
     )
 
-    badLines.foreach(line => DataSetRow.toDataSetRowOption(line) shouldBe None)
+    badLines.foreach(
+      line => DataSetRow.toDataSetRowEither(line).isLeft shouldBe true
+    )
   }
 }

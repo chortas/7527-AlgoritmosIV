@@ -25,9 +25,6 @@ case class DataSetRow(id: Int,
 object DataSetRow {
   val NUMBER_OF_FIELDS: Int = 16
 
-  def toDataSetRowOption(line: String): Option[DataSetRow] =
-    toDataSetRowEither(line).toOption
-
   def toDataSetRowEither(line: String): Either[Throwable, DataSetRow] = {
     for {
       fields <- toFieldsEither(line)
@@ -77,16 +74,14 @@ object DataSetRow {
       _.toDoubleOption.toRight(new Throwable("Field should be a double"))
     )
 
-  private def toVaryingNotNullEither(length: Int,
-                                     field: String): Either[Throwable, String] =
+  def toVaryingNotNullEither(length: Int,
+                             field: String): Either[Throwable, String] =
     toNotNullEither(field).filterOrElse(
       _.length <= length,
       new Throwable(s"Value '$field' should be at most $length characters long")
     )
 
-  private def toLocalDateTimeEither(
-    field: String
-  ): Either[Throwable, LocalDateTime] = {
+  def toLocalDateTimeEither(field: String): Either[Throwable, LocalDateTime] = {
     val field2 = field
       .replace("a.m.", "AM")
       .replace("p.m.", "PM")
