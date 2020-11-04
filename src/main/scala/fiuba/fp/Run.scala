@@ -21,15 +21,15 @@ object Run extends IOApp {
         .through(text.lines)
         .drop(1) // remove header
         .dropLastIf(_.isEmpty)
-        .map(DataSetRow.toDataSetRowOption)
+        .map(DataSetRow.toDataSetRowEither)
         .evalMap {
-          case None => IO.pure(Left(new Throwable()))
-          case Some(r) =>
+          case Right(r) =>
             QueryConstructor
               .construct(r)
               .run
               .transact(transactor)
               .attempt
+          case _ => IO.pure(Left(new Throwable()))
         }
         .evalMap {
           case Left(ex) => IO(println(ex))

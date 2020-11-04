@@ -23,7 +23,10 @@ case class DataSetRow(id: Int,
 object DataSetRow {
   val NUMBER_OF_FIELDS: Int = 16
 
-  def toDataSetRowOption(line: String): Option[DataSetRow] = {
+  def toDataSetRowOption(line: String): Option[DataSetRow] =
+    toDataSetRowEither(line).toOption
+
+  def toDataSetRowEither(line: String): Either[Throwable, DataSetRow] = {
     for {
       fields <- mapLineToFields(line)
       id <- fields(0).toIntOption
@@ -53,7 +56,7 @@ object DataSetRow {
         dollarItau,
         wDiff
       )
-  }
+  }.toRight(new Throwable())
 
   private def toLocalDateTimeOption(field: String): Option[LocalDateTime] = {
     val field2 = field
