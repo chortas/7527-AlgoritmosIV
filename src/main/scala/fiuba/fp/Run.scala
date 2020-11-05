@@ -21,20 +21,12 @@ object Run extends IOApp {
         .through(text.lines)
         .drop(1) // remove header
         .dropLastIf(_.isEmpty)
-        .map(DataSetRow.toDataSetRowEither)
-        .evalMap {
-          case Right(r) =>
-            QueryConstructor
-              .construct(r)
-              .run
-              .transact(transactor)
-              .attempt
-          case l => IO.pure(l)
+        .map(DataSetRow.toDataSetRowEither(_).map(QueryConstructor.construct))
+        .evalMap { // collect errors from both parsing and transacting
+          case Right(query) => query.run.transact(transactor).attempt
+          case error        => IO.pure(error)
         }
-        .evalMap {
-          case Left(ex) => IO(println(ex))
-          case _        => IO.unit
-        }
+        .map(_.fold(println, _ => ())) // print errors
   }
 
   implicit val cs = IO.contextShift(ExecutionContext.global)
