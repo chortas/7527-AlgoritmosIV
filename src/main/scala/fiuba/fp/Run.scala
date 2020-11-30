@@ -13,8 +13,9 @@ import scala.concurrent.ExecutionContext
 
 object Run extends IOApp {
 
-  val converter: Stream[IO, Unit] = Stream.resource(Blocker[IO]).flatMap {
-    blocker =>
+  val converter: Stream[IO, Unit] = for {
+    blocker <- Stream.resource(Blocker[IO])
+    results <-
       io.file
         .readAll[IO](Paths.get("train.csv"), blocker, 4096)
         .through(text.utf8Decode)
@@ -24,10 +25,9 @@ object Run extends IOApp {
         .map(DataSetRow.toDataSetRowEither(_).map(QueryConstructor.construct))
         .evalMap { // collect errors from both parsing and transacting
           case Right(query) => query.run.transact(transactor).attempt
-          case error        => IO.pure(error)
+          case error => IO.pure(error)
         }
-        .map(_.fold(println, _ => ())) // print errors
-  }
+  } yield results.fold(println, _ => ()) // print errors
 
   implicit val cs = IO.contextShift(ExecutionContext.global)
 
