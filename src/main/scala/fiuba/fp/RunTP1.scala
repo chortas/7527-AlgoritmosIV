@@ -12,24 +12,25 @@ import fs2.{Stream, io, text}
 
 import scala.concurrent.ExecutionContext
 
-object Run extends IOApp {
+object RunTP1 extends IOApp {
 
   implicit val cs: ContextShift[IO] = IO.contextShift(ExecutionContext.global)
 
   val converter: Stream[IO, Either[Throwable, Int]] = for {
     blocker <- Stream.resource(Blocker[IO])
-    results <-
-      io.file
-        .readAll[IO](Paths.get("train.csv"), blocker, 4096)
-        .through(text.utf8Decode)
-        .through(text.lines)
-        .drop(1) // remove header
-        .dropLastIf(_.isEmpty)
-        .map(DataSetRow.toDataSetRowEither(_).map(QueryConstructor.construct))
-        .evalMap { // collect errors from both parsing and transacting
-          case Right(query) => query.run.transact(transactor).attempt
-          case Left(error) => IO.pure[Either[Throwable, Int]](Left(error))
-        }
+    results <- io.file
+      .readAll[IO](Paths.get("train.csv"), blocker, 4096)
+      .through(text.utf8Decode)
+      .through(text.lines)
+      .drop(1) // remove header
+      .dropLastIf(_.isEmpty)
+      .map(
+        DataSetRow.toDataSetRowEither(_).map(QueryConstructor.constructInsert)
+      )
+      .evalMap { // collect errors from both parsing and transacting
+        case Right(query) => query.run.transact(transactor).attempt
+        case Left(error)  => IO.pure[Either[Throwable, Int]](Left(error))
+      }
   } yield results
 
   val transactor: Aux[IO, Unit] = Transactor.fromDriverManager[IO](
