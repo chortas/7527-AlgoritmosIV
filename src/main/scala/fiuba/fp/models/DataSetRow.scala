@@ -42,16 +42,16 @@ object DataSetRow {
       DataSetRow(
         id,
         date,
-        fields(2).toDoubleOption,
-        fields(3).toDoubleOption,
-        fields(4).toDoubleOption,
+        toDoubleOption(fields(2)),
+        toDoubleOption(fields(3)),
+        toDoubleOption(fields(4)),
         last,
         close,
         diff,
         curr,
-        fields(9).toIntOption,
-        fields(10).toIntOption,
-        fields(11).toIntOption,
+        toIntOption(fields(9)),
+        toIntOption(fields(10)),
+        toIntOption(fields(11)),
         unit,
         dollarBN,
         dollarItau,
@@ -65,14 +65,14 @@ object DataSetRow {
   }
 
   def toIntNotNullEither(field: String): Either[Throwable, Int] =
-    toNotNullEither(field).flatMap(
-      _.toIntOption.toRight(new Throwable("Field should be an int"))
-    )
+    toNotNullEither(field).flatMap {
+      toIntOption(_).toRight(new Throwable("Field should be an int"))
+    }
 
   def toDoubleNotNullEither(field: String): Either[Throwable, Double] =
-    toNotNullEither(field).flatMap(
-      _.toDoubleOption.toRight(new Throwable("Field should be a double"))
-    )
+    toNotNullEither(field).flatMap {
+      toDoubleOption(_).toRight(new Throwable("Field should be a double"))
+    }
 
   def toVaryingNotNullEither(length: Int,
                              field: String): Either[Throwable, String] =
@@ -103,4 +103,7 @@ object DataSetRow {
         )
     }
   }
+
+  def toDoubleOption(field: String): Option[Double] = Try(field.toDouble).toOption
+  def toIntOption(field: String): Option[Int] = Try(field.toInt).toOption
 }

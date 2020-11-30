@@ -12,7 +12,7 @@ para esto sera necesario hacer un programa que levante la data de la db (en doob
 convierta los valores a numeros, parta la data en train y test (70/30).
 Para finalmente pasarsela a un pipeline de spark que nos cree un modelo Random Forest regressor y sea persistido en formato PMML.
 
-## DB
+## Spark
 
 ```sh
 docker run --rm -ti -p '8090:8080' -p '7077:7077' docker.io/bitnami/spark:3-debian-10
