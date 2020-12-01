@@ -1,6 +1,5 @@
 package fiuba.fp.ml
 
-import fiuba.fp.models.DataSetRow
 import cats.data.State
 
 import scala.util.Random
