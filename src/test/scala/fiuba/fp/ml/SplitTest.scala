@@ -18,7 +18,6 @@ class SplitTest extends FpTpSpec {
     Split
       .split(list)
       .map(assertions(_))
-      .run(Seed(0))
+      .runA(Seed(0))
       .value
-      ._2
 }

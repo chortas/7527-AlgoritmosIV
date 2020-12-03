@@ -1,6 +1,7 @@
 package fiuba.fp.ml
 
 import cats.data.State
+import cats.effect.IO
 
 import scala.util.Random
 
@@ -14,6 +15,13 @@ final case class Seed(long: Long) {
 case class DataSet[A](train: List[A], test: List[A])
 
 object Split {
+  def splitIO(list: List[_]): IO[DataSet[_]] = for {
+    initialSeed <- IO(new Random().nextLong())
+    l <- IO.eval(Split.split(list).runA(Seed(initialSeed)))
+  } yield {
+    l
+  }
+
   def split(list: List[_]): State[Seed, DataSet[_]] =
     shuffle(list).map { l =>
       val (l1, l2) = l.splitAt((list.length * 0.7).round.toInt)
