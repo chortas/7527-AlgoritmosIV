@@ -5,6 +5,7 @@ import doobie._
 import doobie.implicits._
 import doobie.util.transactor.Transactor.Aux
 import fiuba.fp.database.QueryConstructor
+import fiuba.fp.ml.{Seed, Split}
 import fiuba.fp.models.DataSetRowSparkSchema
 
 import scala.concurrent.ExecutionContext
@@ -28,6 +29,12 @@ object RunTP2 extends IOApp {
 
   val otherResult: IO[List[DataSetRowSparkSchema]] = result.transact(transactor)
 
+  def f(dataSet: List[DataSetRowSparkSchema]) =
+    Split.split(dataSet)
+    .map(dataSet => println(s"Train es ${dataSet.train.length}"))
+    .run(Seed(0))
+    .value._2
+
   /*
     .fold(List[DataSetRowSparkSchema]()) { (acc, r) =>
       acc :+ r
@@ -40,8 +47,10 @@ object RunTP2 extends IOApp {
     )
    */
 
-  def run(args: List[String]): IO[ExitCode] =
-    otherResult
-      .map(dataSet => println(s"Train es ${dataSet.length}"))
-      .map(_ => ExitCode.Success)
+  def run(args: List[String]): IO[ExitCode] = for {
+    dataSet <- otherResult
+  } yield {
+    f(dataSet)
+    ExitCode.Success
+  }
 }
