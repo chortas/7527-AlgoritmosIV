@@ -1,5 +1,7 @@
 package fiuba.fp
 
+import java.io.{FileOutputStream, OutputStream}
+
 import cats.effect.{ContextShift, ExitCode, IO, IOApp}
 import doobie._
 import doobie.implicits._
@@ -15,6 +17,7 @@ import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Dataset, SparkSession}
 import org.jpmml.model.JAXBUtil
+import org.jpmml.model.metro.MetroJAXBUtil
 import org.jpmml.sparkml.PMMLBuilder
 
 import scala.concurrent.ExecutionContext
@@ -84,6 +87,11 @@ object RunTP2 extends IOApp {
 
     val pipelinePredictionDf = pipelineModel.transform(dataSetTest)
     pipelinePredictionDf.show(10)
+
+    val pmml = new PMMLBuilder(schema, pipelineModel).build
+
+    val os: OutputStream = new FileOutputStream("model.pmml");
+    MetroJAXBUtil.marshalPMML(pmml, os);
 
     spark.close()
   })
