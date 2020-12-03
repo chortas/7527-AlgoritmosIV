@@ -7,45 +7,46 @@ import org.apache.spark.sql.types.StructType
 
 case class DataSetRowSparkSchema(id: Int,
                                  date: Long,
-                                 open: Option[Double],
-                                 high: Option[Double],
-                                 low: Option[Double],
+                                 open: Double,
+                                 high: Double,
+                                 low: Double,
                                  last: Double,
                                  close: Double,
                                  diff: Double,
-                                 curr: String,
-                                 OVol: Option[Int],
-                                 Odiff: Option[Int],
-                                 OpVol: Option[Int],
-                                 unit: String,
+                                 OVol: Int,
+                                 Odiff: Int,
+                                 OpVol: Int,
                                  dollarBN: Double,
                                  dollarItau: Double,
                                  wDiff: Double)
 
 object DataSetRowSparkSchema {
-  def apply(dataSetRow: DataSetRow): DataSetRowSparkSchema = new DataSetRowSparkSchema(
-    dataSetRow.id,
-    dataSetRow.date.toEpochSecond(ZoneOffset.UTC),
-    dataSetRow.open,
-    dataSetRow.high,
-    dataSetRow.low,
-    dataSetRow.last,
-    dataSetRow.close,
-    dataSetRow.diff,
-    dataSetRow.curr,
-    dataSetRow.OVol,
-    dataSetRow.Odiff,
-    dataSetRow.OpVol,
-    dataSetRow.unit,
-    dataSetRow.dollarBN,
-    dataSetRow.dollarItau,
-    dataSetRow.wDiff)
+  def apply(dataSetRow: DataSetRow): DataSetRowSparkSchema =
+    new DataSetRowSparkSchema(
+      dataSetRow.id,
+      dataSetRow.date.toEpochSecond(ZoneOffset.UTC),
+      dataSetRow.open.getOrElse(0),
+      dataSetRow.high.getOrElse(0),
+      dataSetRow.low.getOrElse(0),
+      dataSetRow.last,
+      dataSetRow.close,
+      dataSetRow.diff,
+      dataSetRow.OVol.getOrElse(0),
+      dataSetRow.Odiff.getOrElse(0),
+      dataSetRow.OpVol.getOrElse(0),
+      dataSetRow.dollarBN,
+      dataSetRow.dollarItau,
+      dataSetRow.wDiff
+    )
 }
 
 /**
- * Console app that shows what the schema looks like
- */
+  * Console app that shows what the schema looks like
+  */
 private object DataSetRowSparkSchemaRun extends App {
-  val schema: StructType = ScalaReflection.schemaFor[DataSetRowSparkSchema].dataType.asInstanceOf[StructType]
+  val schema: StructType = ScalaReflection
+    .schemaFor[DataSetRowSparkSchema]
+    .dataType
+    .asInstanceOf[StructType]
   schema.printTreeString
 }
