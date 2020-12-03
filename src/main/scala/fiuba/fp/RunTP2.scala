@@ -7,28 +7,12 @@ import doobie.util.transactor.Transactor.Aux
 import fiuba.fp.database.QueryConstructor
 import fiuba.fp.ml.{DataSet, Split}
 import fiuba.fp.models.DataSetRowSparkSchema
-import org.apache.spark
-import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
-import org.apache.spark.ml.regression.{
-  RandomForestRegressionModel,
-  RandomForestRegressor
-}
-import org.apache.spark.rdd.RDD
+import org.apache.spark.ml.regression.RandomForestRegressor
+import org.apache.spark.ml.{Pipeline, PipelineModel}
+import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.ScalaReflection
-import org.apache.spark.sql.{
-  DataFrame,
-  Dataset,
-  Encoder,
-  Encoders,
-  SparkSession
-}
-import org.apache.spark.sql.types.{
-  DoubleType,
-  IntegerType,
-  StructField,
-  StructType
-}
+import org.apache.spark.sql.types.StructType
 
 import scala.concurrent.ExecutionContext
 
@@ -95,12 +79,12 @@ object RunTP2 extends IOApp {
     spark.close()
   }
 
-  override def run(args: List[String]): IO[ExitCode] =
-    for {
-      l <- resultIO
-      ds <- Split.splitIO(l)
-    } yield {
+  private val dataSetIO: IO[DataSet[_]] =
+    resultIO.flatMap(Split.splitIO)
+
+  override def run(args: List[String]): IO[ExitCode] = dataSetIO
+    .map(ds => {
       consumeDataSet(ds)
       ExitCode.Success
-    }
+    })
 }
