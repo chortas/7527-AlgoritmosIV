@@ -11,15 +11,15 @@ final case class Seed(long: Long) {
   def next = Seed(long * 6364136223846793005L + 1442695040888963407L)
 }
 
+case class DataSet[A](train: List[A], test: List[A])
+
 object Split {
-  def split(list: List[_]): State[Seed, (List[_], List[_])] =
-    random().map {
-      _.shuffle(list).splitAt((list.length * 0.7).round.toInt)
+  def split(list: List[_]): State[Seed, DataSet[_]] =
+    shuffle(list).map { l =>
+      val (l1, l2) = l.splitAt((list.length * 0.7).round.toInt)
+      DataSet(l1, l2)
     }
 
-  /**
-    * Random wrapped in a State monad
-    */
-  private def random(): State[Seed, Random] =
-    State(seed => (seed.next, new Random(seed.long)))
+  private def shuffle(list: List[_]): State[Seed, List[_]] =
+    State(seed => (seed.next, new Random(seed.long).shuffle(list)))
 }
