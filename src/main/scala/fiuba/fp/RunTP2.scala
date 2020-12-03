@@ -10,9 +10,9 @@ import fiuba.fp.models.DataSetRowSparkSchema
 import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
 import org.apache.spark.ml.regression.RandomForestRegressor
 import org.apache.spark.ml.{Pipeline, PipelineModel}
-import org.apache.spark.sql.SparkSession
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.StructType
+import org.apache.spark.sql.{Dataset, SparkSession}
 
 import scala.concurrent.ExecutionContext
 
@@ -28,12 +28,6 @@ object RunTP2 extends IOApp {
     "password"
   )
 
-  private val resultIO: IO[List[DataSetRowSparkSchema]] = QueryConstructor
-    .constructSelect()
-    .map(DataSetRowSparkSchema(_))
-    .to[List]
-    .transact(transactor)
-
   private final val spark: SparkSession = SparkSession
     .builder()
     .master("local[*]")
@@ -44,13 +38,24 @@ object RunTP2 extends IOApp {
     .dataType
     .asInstanceOf[StructType]
 
-  import spark.implicits._
+  private val resultIO: IO[List[DataSetRowSparkSchema]] = QueryConstructor
+    .constructSelect()
+    .map(DataSetRowSparkSchema(_))
+    .to[List]
+    .transact(transactor)
 
-  private def consumeDataSet(dataSet: DataSet[DataSetRowSparkSchema]) = {
+  private val dataSetIO: IO[DataSet[DataSetRowSparkSchema]] =
+    resultIO.flatMap(Split.splitIO)
+
+  private val sparkDatasetsIO: IO[(Dataset[_], Dataset[_])] = dataSetIO.map(dataSet => {
+    import spark.implicits._
     val rddTest = spark.sparkContext.makeRDD(dataSet.test)
     val rddTrain = spark.sparkContext.makeRDD(dataSet.train)
-    val dataSetTest = spark.createDataset(rddTest)
-    val dataSetTrain = spark.createDataset(rddTrain)
+    (spark.createDataset(rddTest), spark.createDataset(rddTrain))
+  })
+
+  private val consumedDataSet: IO[Unit] = sparkDatasetsIO.map(dataSets => {
+    val (dataSetTest, dataSetTrain) = dataSets
 
     val assembler: VectorAssembler = new VectorAssembler()
       .setInputCols(schema.fieldNames.filter(!_.equals("close")))
@@ -77,14 +82,8 @@ object RunTP2 extends IOApp {
     pipelinePredictionDf.show(10)
 
     spark.close()
-  }
+  })
 
-  private val dataSetIO: IO[DataSet[_]] =
-    resultIO.flatMap(Split.splitIO)
-
-  override def run(args: List[String]): IO[ExitCode] = dataSetIO
-    .map(ds => {
-      consumeDataSet(ds)
-      ExitCode.Success
-    })
+  override def run(args: List[String]): IO[ExitCode] = consumedDataSet
+    .map(_ => ExitCode.Success)
 }

@@ -15,19 +15,19 @@ final case class Seed(long: Long) {
 case class DataSet[A](train: List[A], test: List[A])
 
 object Split {
-  def splitIO(list: List[_]): IO[DataSet[_]] = for {
+  def splitIO[T](list: List[T]): IO[DataSet[T]] = for {
     initialSeed <- IO(new Random().nextLong())
     l <- IO.eval(Split.split(list).runA(Seed(initialSeed)))
   } yield {
     l
   }
 
-  def split(list: List[_]): State[Seed, DataSet[_]] =
+  def split[T](list: List[T]): State[Seed, DataSet[T]] =
     shuffle(list).map { l =>
       val (l1, l2) = l.splitAt((list.length * 0.7).round.toInt)
       DataSet(l1, l2)
     }
 
-  private def shuffle(list: List[_]): State[Seed, List[_]] =
+  private def shuffle[T](list: List[T]): State[Seed, List[T]] =
     State(seed => (seed.next, new Random(seed.long).shuffle(list)))
 }
