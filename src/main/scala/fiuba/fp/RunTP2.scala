@@ -9,18 +9,17 @@ import doobie.util.transactor.Transactor.Aux
 import fiuba.fp.database.QueryConstructor
 import fiuba.fp.ml.{DataSet, Split}
 import fiuba.fp.models.DataSetRowSparkSchema
-import javax.xml.transform.stream.StreamResult
+import org.apache.spark.ml.Pipeline
 import org.apache.spark.ml.feature.{StringIndexer, VectorAssembler}
 import org.apache.spark.ml.regression.RandomForestRegressor
-import org.apache.spark.ml.{Pipeline, PipelineModel}
 import org.apache.spark.sql.catalyst.ScalaReflection
 import org.apache.spark.sql.types.StructType
 import org.apache.spark.sql.{Dataset, SparkSession}
-import org.jpmml.model.JAXBUtil
 import org.jpmml.model.metro.MetroJAXBUtil
 import org.jpmml.sparkml.PMMLBuilder
 
 import scala.concurrent.ExecutionContext
+import scala.util.Try
 
 object RunTP2 extends IOApp {
 
@@ -83,15 +82,14 @@ object RunTP2 extends IOApp {
     val stages = Array(assembler, indexer, randomForestRegressor)
 
     val pipeline = new Pipeline().setStages(stages)
-    val pipelineModel: PipelineModel = pipeline.fit(dataSetTrain)
-
-    val pipelinePredictionDf = pipelineModel.transform(dataSetTest)
-    pipelinePredictionDf.show(10)
-
-    val pmml = new PMMLBuilder(schema, pipelineModel).build
-
-    val os: OutputStream = new FileOutputStream("model.pmml");
-    MetroJAXBUtil.marshalPMML(pmml, os);
+    Try(pipeline.fit(dataSetTrain))
+      .fold(_ => println("The model creation failed"), p => {
+        val pipelinePredictionDf = p.transform(dataSetTest)
+        pipelinePredictionDf.show(10)
+        val pmml = new PMMLBuilder(schema, p).build
+        val os: OutputStream = new FileOutputStream("model.pmml");
+        MetroJAXBUtil.marshalPMML(pmml, os);
+      })
 
     spark.close()
   })
