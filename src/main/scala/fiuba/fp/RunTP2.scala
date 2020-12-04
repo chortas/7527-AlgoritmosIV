@@ -70,6 +70,7 @@ object RunTP2 extends IOApp {
     val indexer = new StringIndexer()
       .setInputCol("close")
       .setOutputCol("label")
+      .setHandleInvalid("skip")
 
     val seed = 5043
 
