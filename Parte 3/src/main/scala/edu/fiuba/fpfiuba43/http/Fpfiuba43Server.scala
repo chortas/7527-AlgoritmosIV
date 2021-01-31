@@ -1,6 +1,7 @@
 package edu.fiuba.fpfiuba43.http
 
 import cats.effect.{ConcurrentEffect, Timer}
+import cats.implicits._
 import edu.fiuba.fpfiuba43.services.HealthCheckImpl
 import fs2.Stream
 import org.http4s.implicits._
@@ -14,7 +15,10 @@ object Fpfiuba43Server {
   def stream[F[_]: ConcurrentEffect](implicit T: Timer[F]): Stream[F, Nothing] = {
 
     val healthCheck = new HealthCheckImpl[F]("changeme")
-    val httpApp = Fpfiuba43Routes.healthCheckRoutes[F](healthCheck).orNotFound
+    val httpApp = (
+      Fpfiuba43Routes.healthCheckRoutes[F](healthCheck) <+>
+        Fpfiuba43Routes.scoresRoutes[F](healthCheck)
+    ).orNotFound
     val finalHttpApp = Logger.httpApp(true, true)(httpApp)
 
     for {
