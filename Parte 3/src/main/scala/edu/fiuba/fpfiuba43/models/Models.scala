@@ -22,6 +22,10 @@ case class InputRow(id: Int,
                     dollarItau: Double,
                     wDiff: Double)
 
+// TODO hash_code vs hashCode
+case class ScoresRow(hash_code: Int,
+                     score: Double)
+
 object InputRow {
   implicit val decoder: Decoder[InputRow] = deriveDecoder
 }
