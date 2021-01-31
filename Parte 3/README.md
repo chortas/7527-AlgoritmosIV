@@ -13,12 +13,14 @@ en dicha tabla.
 Se usara una nuevo container que tiene la nueva tabla, este es: ```fpfiuba/tpdb:3```
 
 Para correrlo se realiza de la siguiente manera
-```
-$ docker run -p 5432:5432 -d --name db3 fpfiuba/tpdb:3
+
+```shell
+$ docker run -p 5434:5432 --rm -ti --name db3 fpfiuba/tpdb:3
 ```
 
 Nueva tabla para persistir los scores (ya creada en el container)
-```roomsql
+
+```postgresql
 CREATE TABLE fptp.scores(
     hash_code int PRIMARY KEY,
     score double precision not null
@@ -32,6 +34,7 @@ Debe tener por lo menos dos endpoints
 GET /health-check
 
 cuya respuesta es (maintainer es el nombre de su grupo):
+
 ```json
 {
   "version": "0.1",
@@ -45,22 +48,24 @@ recibe un JSON como este, aquí los campos Opcionales fueron excluidos,
 pero podrían estar.
 
 ```json
-{"id" : 158,
- "date" : "2020-12-02T14:49:15.841609",
- "last" : 0.0,
- "close" : 148.0,
- "diff" : 0.0,
- "curr": "D",
- "unit" : "TONS",
- "dollarBN": 2.919,
- "dollarItau": 2.91,
- "wDiff": -148.0
+{
+  "id": 158,
+  "date": "2020-12-02T14:49:15.841609",
+  "last": 0.0,
+  "close": 148.0,
+  "diff": 0.0,
+  "curr": "D",
+  "unit": "TONS",
+  "dollarBN": 2.919,
+  "dollarItau": 2.91,
+  "wDiff": -148.0
 }
 ```
 
 La respuesta tiene que ser
+
 ```json
 {
-  "score" : 93.166753131
+  "score": 93.166753131
 }
 ```
