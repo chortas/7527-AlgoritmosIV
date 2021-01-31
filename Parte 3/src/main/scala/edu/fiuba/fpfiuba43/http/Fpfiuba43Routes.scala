@@ -30,7 +30,7 @@ object Fpfiuba43Routes {
       case req @ POST -> Root / "scores" =>
         for {
           inputRow <- req.decodeJson[InputRow]
-          scores <- s.scores
+          scores <- s.scores(inputRow)
           resp <- Ok(scores.asJson)
         } yield resp
     }
