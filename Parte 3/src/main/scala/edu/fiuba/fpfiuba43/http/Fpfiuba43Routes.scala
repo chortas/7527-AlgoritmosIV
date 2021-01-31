@@ -3,7 +3,7 @@ package edu.fiuba.fpfiuba43.http
 import cats.effect.Sync
 import cats.implicits._
 import edu.fiuba.fpfiuba43.models.{InputRow, ScoresMessage}
-import edu.fiuba.fpfiuba43.services.HealthCheck
+import edu.fiuba.fpfiuba43.services.{HealthCheck, Scores}
 import io.circe.syntax._
 import org.http4s.HttpRoutes
 import org.http4s.circe._
@@ -23,14 +23,15 @@ object Fpfiuba43Routes {
     }
   }
 
-  def scoresRoutes[F[_]: Sync](): HttpRoutes[F] = {
+  def scoresRoutes[F[_]: Sync](s: Scores[F]): HttpRoutes[F] = {
     val dsl = new Http4sDsl[F] {}
     import dsl._
     HttpRoutes.of[F] {
       case req @ POST -> Root / "scores" =>
         for {
           inputRow <- req.decodeJson[InputRow]
-          resp <- Ok(ScoresMessage(inputRow.diff).asJson)
+          scores <- s.scores
+          resp <- Ok(scores.asJson)
         } yield resp
     }
   }
