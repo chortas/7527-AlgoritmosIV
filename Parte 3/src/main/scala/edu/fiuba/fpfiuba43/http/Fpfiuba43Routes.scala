@@ -19,6 +19,11 @@ object Fpfiuba43Routes {
           healthCheck <- h.healthCheck
           resp <- Ok(healthCheck.asJson)
         } yield resp
+      case POST -> Root / "scores" =>
+        for{
+          healthCheck <- h.healthCheck
+          resp <- Ok(healthCheck.asJson)
+        } yield resp
     }
   }
 
