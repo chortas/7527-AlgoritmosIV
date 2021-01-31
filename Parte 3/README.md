@@ -1,3 +1,10 @@
+# Integrantes
+
+Padrón | Nombre               | E-mail
+-------|----------------------|------------------------
+94322  | Martín González Coll | mgonzalezcoll@fi.uba.ar
+100687 | Cecilia Hortas       | chortas@fi.uba.ar
+
 # Tercera Parte
 
 A partir del modelo obtenido en el tp anterior construir un servicio REST. 
