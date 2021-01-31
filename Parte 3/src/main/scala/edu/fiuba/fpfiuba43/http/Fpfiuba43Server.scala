@@ -17,7 +17,7 @@ object Fpfiuba43Server {
     val healthCheck = new HealthCheckImpl[F]("changeme")
     val httpApp = (
       Fpfiuba43Routes.healthCheckRoutes[F](healthCheck) <+>
-        Fpfiuba43Routes.scoresRoutes[F](healthCheck)
+        Fpfiuba43Routes.scoresRoutes[F]()
     ).orNotFound
     val finalHttpApp = Logger.httpApp(true, true)(httpApp)
 
