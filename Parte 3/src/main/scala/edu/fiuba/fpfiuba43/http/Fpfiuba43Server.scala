@@ -13,19 +13,11 @@ import scala.concurrent.ExecutionContext.global
 
 object Fpfiuba43Server {
 
-  def stream[F[_]: ConcurrentEffect](implicit T: Timer[F]): Stream[F, Nothing] = {
-
-    implicit val cs: ContextShift[F] = ContextShift[F].shift
-
-    val transactor = Transactor.fromDriverManager[F](
-      "org.postgresql.Driver",
-      "jdbc:postgresql://localhost:5434/fpalgo",
-      "fiuba",
-      "password"
-    )
+  def stream[F[_]: ConcurrentEffect](implicit T: Timer[F],
+                                     cs: ContextShift[F]): Stream[F, Nothing] = {
 
     val healthCheck = new HealthCheckImpl[F]("changeme")
-    val scores = new ScoresImpl[F](transactor)
+    val scores = new ScoresImpl[F]()
     val httpApp = (
       Fpfiuba43Routes.healthCheckRoutes[F](healthCheck) <+>
         Fpfiuba43Routes.scoresRoutes[F](scores)
