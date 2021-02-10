@@ -1,18 +1,19 @@
 package edu.fiuba.fpfiuba43.services
 
-import doobie.{ConnectionIO, ExecutionContexts, Transactor}
-import edu.fiuba.fpfiuba43.models.{InputRow, ScoresMessage, ScoresRow}
 import cats.effect._
 import cats.implicits._
-import doobie._
-import doobie.implicits._
+import doobie.ExecutionContexts
 import doobie.hikari._
+import doobie.implicits._
+import edu.fiuba.fpfiuba43.models.{InputRow, ScoresMessage, ScoresRow}
 
 trait Scores[F[_]] {
   def scores(inputRow: InputRow): F[ScoresMessage]
 }
 
-class ScoresImpl[F[_] : Async](implicit contextShift: ContextShift[F]) extends Scores[F] {
+class ScoresImpl[F[_]: Async](pmml: Pmml[F])(
+  implicit contextShift: ContextShift[F]
+) extends Scores[F] {
 
   val transactorResource: Resource[F, HikariTransactor[F]] =
     for {
@@ -31,18 +32,20 @@ class ScoresImpl[F[_] : Async](implicit contextShift: ContextShift[F]) extends S
   override def scores(inputRow: InputRow): F[ScoresMessage] = {
     transactorResource.use { transactor =>
       for {
-        scoreOption <- sql"select * from fptp.scores where hash_code = ${inputRow.hashCode}".query[ScoresRow].option.transact(transactor)
+        scoreOption <- sql"select * from fptp.scores where hash_code = ${inputRow.hashCode}"
+          .query[ScoresRow]
+          .option
+          .transact(transactor)
         score <- scoreOption match {
           case Some(value) => value.score.pure[F]
-          case None => calculateScore(inputRow).flatMap { score =>
-            sql"insert into fptp.scores (hash_code, score) values (${inputRow.hashCode}, $score)".update.run.transact(transactor)
-              .map(_ => score)
-          }
+          case None =>
+            pmml.score(inputRow).flatMap { score =>
+              sql"insert into fptp.scores (hash_code, score) values (${inputRow.hashCode}, $score)".update.run
+                .transact(transactor)
+                .map(_ => score)
+            }
         }
       } yield ScoresMessage(score)
     }
   }
-
-  private def calculateScore(inputRow: InputRow): F[Double] =
-    10.0.pure[F]
 }
