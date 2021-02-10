@@ -12,8 +12,9 @@ trait Scores[F[_]] {
   def scores(inputRow: InputRow): F[ScoresMessage]
 }
 
-class ScoresImpl[F[_]: Async](implicit contextShift: ContextShift[F])
-    extends Scores[F] {
+class ScoresImpl[F[_]: Async](pmml: Pmml[F])(
+  implicit contextShift: ContextShift[F]
+) extends Scores[F] {
 
   val transactorResource: Resource[F, HikariTransactor[F]] =
     for {
@@ -39,7 +40,7 @@ class ScoresImpl[F[_]: Async](implicit contextShift: ContextShift[F])
         score <- scoreOption match {
           case Some(value) => value.score.pure[F]
           case None =>
-            calculateScore(inputRow).flatMap { score =>
+            pmml.score(inputRow).flatMap { score =>
               sql"insert into fptp.scores (hash_code, score) values (${inputRow.hashCode}, $score)".update.run
                 .transact(transactor)
                 .map(_ => score)
@@ -48,7 +49,4 @@ class ScoresImpl[F[_]: Async](implicit contextShift: ContextShift[F])
       } yield ScoresMessage(score)
     }
   }
-
-  private def calculateScore(inputRow: InputRow): F[Double] =
-    10.0.pure[F]
 }
