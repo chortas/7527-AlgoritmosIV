@@ -1,12 +1,11 @@
 package edu.fiuba.fpfiuba43.services
 
-import doobie.{ConnectionIO, ExecutionContexts, Transactor}
-import edu.fiuba.fpfiuba43.models.{InputRow, ScoresMessage, ScoresRow}
 import cats.effect._
 import cats.implicits._
-import doobie._
-import doobie.implicits._
+import doobie.ExecutionContexts
 import doobie.hikari._
+import doobie.implicits._
+import edu.fiuba.fpfiuba43.models.{InputRow, ScoresMessage, ScoresRow}
 
 trait Scores[F[_]] {
   def scores(inputRow: InputRow): F[ScoresMessage]
