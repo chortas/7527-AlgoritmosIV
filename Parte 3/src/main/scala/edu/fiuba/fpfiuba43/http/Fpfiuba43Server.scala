@@ -1,11 +1,13 @@
 package edu.fiuba.fpfiuba43.http
 
-import cats.effect.{ConcurrentEffect, ContextShift, IO, Timer}
+import cats.effect.{ConcurrentEffect, ContextShift, IO, Resource, Timer}
 import cats.implicits._
 import doobie.Transactor
+import edu.fiuba.fpfiuba43.models.{InputRow, ScoresRow}
 import edu.fiuba.fpfiuba43.services.{
   HealthCheckImpl,
   PmmlImpl,
+  RepositoryImpl,
   ScoresImpl,
   TransactorImpl
 }
@@ -25,7 +27,8 @@ class Fpfiuba43Server(evaluator: ModelEvaluator[_]) {
     val healthCheck = new HealthCheckImpl[F]("195009")
     val pmml = new PmmlImpl[F](evaluator)
     val transactor = new TransactorImpl[F]()
-    val scores = new ScoresImpl[F](pmml, transactor)
+    val repository = new RepositoryImpl[F](transactor.resource)
+    val scores = new ScoresImpl[F](pmml, repository)
     val httpApp = (
       Fpfiuba43Routes.healthCheckRoutes[F](healthCheck) <+>
         Fpfiuba43Routes.scoresRoutes[F](scores)

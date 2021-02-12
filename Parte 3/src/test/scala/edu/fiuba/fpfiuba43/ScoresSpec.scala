@@ -3,8 +3,13 @@ package edu.fiuba.fpfiuba43
 import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import edu.fiuba.fpfiuba43.http.Fpfiuba43Routes
-import edu.fiuba.fpfiuba43.models.InputRow
-import edu.fiuba.fpfiuba43.services.{Pmml, ScoresImpl, TransactorImpl}
+import edu.fiuba.fpfiuba43.models.{InputRow, ScoresRow}
+import edu.fiuba.fpfiuba43.services.{
+  Pmml,
+  Repository,
+  ScoresImpl,
+  TransactorImpl
+}
 import io.circe._
 import io.circe.literal._
 import org.http4s._
@@ -30,7 +35,11 @@ class ScoresSpec extends org.specs2.mutable.Specification {
     val pmml = new Pmml[IO] {
       override def score(inputRow: InputRow): IO[Double] = scoreIO
     }
-    val scores = new ScoresImpl[IO](pmml, transactor)
+    val repository = new Repository[IO] {
+      override def findScore(inputRow: InputRow): IO[Option[ScoresRow]] = ???
+      override def storeScore(inputRow: InputRow, score: Double): IO[Int] = ???
+    }
+    val scores = new ScoresImpl[IO](pmml, repository)
     Fpfiuba43Routes
       .scoresRoutes(scores)
       .orNotFound(getScore)

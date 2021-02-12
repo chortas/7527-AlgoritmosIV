@@ -5,13 +5,13 @@ import doobie.ExecutionContexts
 import doobie.hikari._
 
 trait Transactor[F[_]] {
-  val resource: Resource[F, HikariTransactor[F]]
+  val resource: Resource[F, doobie.Transactor[F]]
 }
 
 class TransactorImpl[F[_]: Async](implicit contextShift: ContextShift[F])
     extends Transactor[F] {
 
-  val resource: Resource[F, HikariTransactor[F]] =
+  val resource: Resource[F, doobie.Transactor[F]] =
     for {
       ce <- ExecutionContexts.fixedThreadPool[F](32) // our connect EC
       be <- Blocker[F] // our blocking EC
