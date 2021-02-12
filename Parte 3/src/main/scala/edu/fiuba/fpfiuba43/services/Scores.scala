@@ -11,26 +11,12 @@ trait Scores[F[_]] {
   def scores(inputRow: InputRow): F[ScoresMessage]
 }
 
-class ScoresImpl[F[_]: Async](pmml: Pmml[F])(
+class ScoresImpl[F[_]: Async](pmml: Pmml[F], transactor: Transactor[F])(
   implicit contextShift: ContextShift[F]
 ) extends Scores[F] {
 
-  val transactorResource: Resource[F, HikariTransactor[F]] =
-    for {
-      ce <- ExecutionContexts.fixedThreadPool[F](32) // our connect EC
-      be <- Blocker[F] // our blocking EC
-      xa <- HikariTransactor.newHikariTransactor[F](
-        "org.postgresql.Driver",
-        "jdbc:postgresql://localhost:5434/fpalgo",
-        "fiuba",
-        "password",
-        ce, // await connection here
-        be // execute JDBC operations here
-      )
-    } yield xa
-
   override def scores(inputRow: InputRow): F[ScoresMessage] = {
-    transactorResource.use { transactor =>
+    transactor.resource.use { transactor =>
       for {
         scoreOption <- sql"select * from fptp.scores where hash_code = ${inputRow.hashCode}"
           .query[ScoresRow]

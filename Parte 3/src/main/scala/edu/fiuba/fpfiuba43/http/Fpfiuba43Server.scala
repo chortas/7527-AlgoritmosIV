@@ -3,7 +3,12 @@ package edu.fiuba.fpfiuba43.http
 import cats.effect.{ConcurrentEffect, ContextShift, IO, Timer}
 import cats.implicits._
 import doobie.Transactor
-import edu.fiuba.fpfiuba43.services.{HealthCheckImpl, PmmlImpl, ScoresImpl}
+import edu.fiuba.fpfiuba43.services.{
+  HealthCheckImpl,
+  PmmlImpl,
+  ScoresImpl,
+  TransactorImpl
+}
 import fs2.Stream
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
@@ -13,14 +18,14 @@ import org.jpmml.evaluator.ModelEvaluator
 import scala.concurrent.ExecutionContext.global
 
 class Fpfiuba43Server(evaluator: ModelEvaluator[_]) {
-  def stream[F[_]: ConcurrentEffect](
-    implicit T: Timer[F],
-    cs: ContextShift[F],
+  def stream[F[_]: ConcurrentEffect](implicit T: Timer[F],
+                                     cs: ContextShift[F],
   ): Stream[F, Nothing] = {
 
     val healthCheck = new HealthCheckImpl[F]("195009")
     val pmml = new PmmlImpl[F](evaluator)
-    val scores = new ScoresImpl[F](pmml)
+    val transactor = new TransactorImpl[F]()
+    val scores = new ScoresImpl[F](pmml, transactor)
     val httpApp = (
       Fpfiuba43Routes.healthCheckRoutes[F](healthCheck) <+>
         Fpfiuba43Routes.scoresRoutes[F](scores)

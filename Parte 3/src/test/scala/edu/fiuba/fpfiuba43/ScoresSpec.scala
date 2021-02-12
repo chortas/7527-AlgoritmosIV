@@ -4,7 +4,7 @@ import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import edu.fiuba.fpfiuba43.http.Fpfiuba43Routes
 import edu.fiuba.fpfiuba43.models.InputRow
-import edu.fiuba.fpfiuba43.services.{Pmml, ScoresImpl}
+import edu.fiuba.fpfiuba43.services.{Pmml, ScoresImpl, TransactorImpl}
 import io.circe._
 import io.circe.literal._
 import org.http4s._
@@ -26,10 +26,11 @@ class ScoresSpec extends org.specs2.mutable.Specification {
 
   private[this] def createRetScores(body: Json, scoreIO: IO[Double]) = {
     val getScore = Request[IO](Method.POST, uri"/scores").withEntity(body)
+    val transactor = new TransactorImpl[IO]()
     val pmml = new Pmml[IO] {
       override def score(inputRow: InputRow): IO[Double] = scoreIO
     }
-    val scores = new ScoresImpl[IO](pmml)
+    val scores = new ScoresImpl[IO](pmml, transactor)
     Fpfiuba43Routes
       .scoresRoutes(scores)
       .orNotFound(getScore)
