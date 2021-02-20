@@ -1,6 +1,6 @@
 package edu.fiuba.fpfiuba43.services
 
-import cats.effect._
+import cats.Monad
 import cats.implicits._
 import edu.fiuba.fpfiuba43.models.{InputRow, ScoresMessage}
 
@@ -8,7 +8,7 @@ trait Scores[F[_]] {
   def scores(inputRow: InputRow): F[ScoresMessage]
 }
 
-class ScoresImpl[F[_]: Async](pmml: Pmml[F], repository: Repository[F])
+class ScoresImpl[F[_]: Monad](pmml: Pmml[F], repository: Repository[F])
     extends Scores[F] {
 
   override def scores(inputRow: InputRow): F[ScoresMessage] =

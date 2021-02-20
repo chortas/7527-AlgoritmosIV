@@ -4,17 +4,12 @@ import cats.effect.{ContextShift, IO}
 import cats.implicits._
 import edu.fiuba.fpfiuba43.http.Fpfiuba43Routes
 import edu.fiuba.fpfiuba43.models.{InputRow, ScoresRow}
-import edu.fiuba.fpfiuba43.services.{
-  Pmml,
-  Repository,
-  ScoresImpl,
-}
+import edu.fiuba.fpfiuba43.services.{Pmml, Repository, ScoresImpl}
 import io.circe._
 import io.circe.literal._
 import org.http4s._
 import org.http4s.circe._
 import org.http4s.implicits._
-import org.specs2.matcher.MatchResult
 
 import scala.concurrent.ExecutionContext
 
@@ -37,16 +32,26 @@ class ScoresSpec extends org.specs2.mutable.Specification {
 
   "Scores" >> {
     "return score from pmml when not in repository" >> {
-        val expectedScore = 2.3
-        val retScores = createRetScores(inputRow, expectedScore.pure[IO], None.pure[IO], 0.pure[IO])
-        retScores.status must beEqualTo(Status.Ok)
-        retScores.as[String].unsafeRunSync() must beEqualTo(
-          s"""{"score":$expectedScore}"""
-        )
+      val expectedScore = 2.3
+      val retScores = createRetScores(
+        inputRow,
+        expectedScore.pure[IO],
+        None.pure[IO],
+        0.pure[IO]
+      )
+      retScores.status must beEqualTo(Status.Ok)
+      retScores.as[String].unsafeRunSync() must beEqualTo(
+        s"""{"score":$expectedScore}"""
+      )
     }
     "returns score from db and avoids calculation" >> {
       val expectedScore = 2.3
-      val retScores = createRetScores(inputRow, IO.never, Some(ScoresRow(inputRow.hashCode(), expectedScore)).pure[IO], 0.pure[IO])
+      val retScores = createRetScores(
+        inputRow,
+        IO.never,
+        Some(ScoresRow(inputRow.hashCode(), expectedScore)).pure[IO],
+        0.pure[IO]
+      )
       retScores.status must beEqualTo(Status.Ok)
       retScores.as[String].unsafeRunSync() must beEqualTo(
         s"""{"score":$expectedScore}"""
@@ -54,14 +59,17 @@ class ScoresSpec extends org.specs2.mutable.Specification {
     }
   }
 
-  private[this] def createRetScores(body: Json, pmmlScoreIO: IO[Double], findScoreIO: IO[Option[ScoresRow]], storeScoreIO: IO[Int]) = {
+  private[this] def createRetScores(body: Json,
+                                    pmmlScoreIO: IO[Double],
+                                    findScoreIO: IO[Option[ScoresRow]],
+                                    storeScoreIO: IO[Int]) = {
     val getScore = Request[IO](Method.POST, uri"/scores").withEntity(body)
-    val pmml = new Pmml[IO] {
-      override def score(inputRow: InputRow): IO[Double] = pmmlScoreIO
-    }
+    val pmml: Pmml[IO] = (_: InputRow) => pmmlScoreIO
     val repository = new Repository[IO] {
-      override def findScore(inputRow: InputRow): IO[Option[ScoresRow]] = findScoreIO
-      override def storeScore(inputRow: InputRow, score: Double): IO[Int] = storeScoreIO
+      override def findScore(inputRow: InputRow): IO[Option[ScoresRow]] =
+        findScoreIO
+      override def storeScore(inputRow: InputRow, score: Double): IO[Int] =
+        storeScoreIO
     }
     val scores = new ScoresImpl[IO](pmml, repository)
     Fpfiuba43Routes

@@ -1,6 +1,6 @@
 package edu.fiuba.fpfiuba43.services
 
-import cats.effect.{LiftIO, SyncIO}
+import cats.effect.Sync
 import edu.fiuba.fpfiuba43.models.InputRow
 import org.dmg.pmml.FieldName
 import org.jpmml.evaluator.{EvaluatorUtil, FieldValue, ModelEvaluator}
@@ -11,15 +11,23 @@ trait Pmml[F[_]] {
   def score(inputRow: InputRow): F[Double]
 }
 
-class PmmlImpl[F[_]: LiftIO](evaluator: ModelEvaluator[_])(
-  implicit F: LiftIO[F]
-) extends Pmml[F] {
+class PmmlImpl[F[_]: Sync](evaluator: ModelEvaluator[_]) extends Pmml[F] {
   override def score(inputRow: InputRow): F[Double] = {
-    val arguments: Map[FieldName, FieldValue] = evaluator.getActiveFields.asScala
-      .groupMapReduce(_.getName)(f => f.prepare(inputRow.valueFromFieldName(f.getName.getValue)))((_, curr) => curr)
+    val arguments: Map[FieldName, FieldValue] =
+      evaluator.getActiveFields.asScala
+        .groupMapReduce(_.getName)(
+          f => f.prepare(inputRow.valueFromFieldName(f.getName.getValue))
+        )((_, curr) => curr)
 
-    SyncIO { evaluator.evaluate(arguments.asJava) }
-      .map(EvaluatorUtil.decodeAll(_).get("prediction").toString.toDouble)
-      .to(F)
+    Sync[F].delay {
+      EvaluatorUtil
+        .decodeAll(
+          evaluator
+            .evaluate(arguments.asJava)
+        )
+        .get("prediction")
+        .toString
+        .toDouble
+    }
   }
 }

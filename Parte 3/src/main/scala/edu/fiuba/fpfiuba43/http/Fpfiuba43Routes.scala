@@ -2,7 +2,7 @@ package edu.fiuba.fpfiuba43.http
 
 import cats.effect.Sync
 import cats.implicits._
-import edu.fiuba.fpfiuba43.models.{InputRow}
+import edu.fiuba.fpfiuba43.models.InputRow
 import edu.fiuba.fpfiuba43.services.{HealthCheck, Scores}
 import io.circe.syntax._
 import org.http4s.HttpRoutes

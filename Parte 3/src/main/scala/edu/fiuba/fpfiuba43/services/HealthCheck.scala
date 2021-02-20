@@ -10,5 +10,5 @@ trait HealthCheck[F[_]] {
 
 class HealthCheckImpl[F[_]: Applicative](team: String) extends HealthCheck[F] {
   override def healthCheck: F[HealthCheckMessage] =
-    HealthCheckMessage("0.1",team).pure[F]
+    HealthCheckMessage("0.1", team).pure[F]
 }

@@ -1,16 +1,8 @@
 package edu.fiuba.fpfiuba43.http
 
-import cats.effect.{ConcurrentEffect, ContextShift, IO, Resource, Timer}
+import cats.effect.{ConcurrentEffect, ContextShift, Timer}
 import cats.implicits._
-import doobie.Transactor
-import edu.fiuba.fpfiuba43.models.{InputRow, ScoresRow}
-import edu.fiuba.fpfiuba43.services.{
-  HealthCheckImpl,
-  PmmlImpl,
-  RepositoryImpl,
-  ScoresImpl,
-  TransactorImpl
-}
+import edu.fiuba.fpfiuba43.services._
 import fs2.Stream
 import org.http4s.implicits._
 import org.http4s.server.blaze.BlazeServerBuilder
