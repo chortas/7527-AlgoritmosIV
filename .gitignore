@@ -19,3 +19,8 @@ project/plugins/project/
 .worksheet
 .idea
 
+# Latex
+*.aux
+*.log
+*.out
+
