@@ -6,24 +6,37 @@ En el presente informe expondremos un _code review_ de los trabajos prácticos r
 
 https://github.com/Arkenan/algo4-tp1 
 
-A grandes rasgos observamos a lo largo del trabajo el correcto uso del for comprehension y el uso de la mónada IO sin materializar innecesariamente los resultados saliendose de la monada. Consideramos que esto es lo más importante ya que a nuestro criterio eran los temas importantes de este TP. 
+A grandes rasgos observamos a lo largo del trabajo el correcto uso del for comprehension y el uso de la mónada IO sin materializar innecesariamente los resultados saliendose de la monada.
+Consideramos que esto es lo más importante ya que a nuestro criterio eran los temas importantes de este TP. 
 
-Si bien en este TP nos dijeron que no era necesario, con los conocimientos de ahora pensamos que `Run` podría haber sido una `IOApp` ya que en ese caso no es necesario el `unsafeRunSync` que podría llevar a side effects.
+Si bien en este TP nos dijeron que no era necesario, con los conocimientos de ahora pensamos que `Run` podría haber sido una `IOApp` ya que en ese caso no es explícito el `unsafeRunSync`.
+Nos parece que la responsabilidad del `Logger` está acoplada con la inserción de filas en la base de datos.
 
-Nos pareció bueno el objeto `Validator` ya que hace uso del `Either` en el caso en que no se pueda parsear la fila y de esta manera se guarda la excepción que causó el error. En línea con este pensamiento nos pareció también positivo que agregaron una excepción personalizada para el caso en que no se cuenta con la cantidad de atributos correctos. Un punto de mejora podría ser agregar más excepciones para los distintos casos de error de parseo de la fila y así tener una jerarquía de errores.
+Nos pareció bueno el objeto `Validator` ya que hace uso del `Either` en el caso en que no se pueda parsear la fila y de esta manera se guarda la excepción que causó el error.
+En línea con este pensamiento nos pareció también positivo que agregaron una excepción personalizada para el caso en que no se cuenta con la cantidad de atributos correctos.
+Un punto de mejora podría ser agregar más excepciones para los distintos casos de error de parseo de la fila y así tener una jerarquía de errores.
+Además, creemos que no hace falta usar `Try` para todos los atributos siendo que el sistema de tipos garantiza que no hay errores.
 
+En cuanto a la clase `DB` creemos que podría evitar el uso de `Either` ya que no se maneja el caso de error sino que se propaga.
 
-- En el validator está bueno el uso de either
-- Esta bueno que hayan escrito las cosas en un log.txt para que quede para futuras corridas
-- Buen uso del logger por lo anterior
-- En la case class DB se mantuvieron en la mónada de IO y contemplaron el caso en el que falla la base en un either (bien) 
-- Agregaron una excepción personalizada para el caso en el que no se cuenta con la cantidad de atributos correctos lo cual está bueno
-- Los tests son muy completos y contemplan todos los casos
+En `DataSetRow` nos gustó mucho el uso de pattern matching para deserializar el CSV, aunque recomendamos usar una solución más robusta en un caso productivo.
+
+Los tests son muy completos y contemplan todos los casos.
 
 ## TP2
 
 https://github.com/Arkenan/TP-Algo-4-2
 
+Al igual que en el TP1 recomendamos usar `IOApp` en el `Run`.
+Se observan bien separadas las responsabilidades del pipeline y el código nos parece legible.
+
+En el caso de `Coin` y `Splitter`, creemos que se podría haber usado la mónada `State` para simplificar la implememtación.
+Así, el `Splitter` no tiene que manejar esta responsabilidad llamando a `flip` y guardando la siguiente moneda.
+
+En el objeto `Persistence` las responsabilidades están bien identificadas pero el manejo de los recursos no tiene en cuenta particularidades de la API de Java como cerrar archivos con `try-with-resources`.  
+
+Los tests demuestran cómo el `Splitter` puede ser testeado de manera unitaria evitando fuentes de randomness.
+Sin embargo, otras partes del código requieren más atención.
 
 
 ## TP3
